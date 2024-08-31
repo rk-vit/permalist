@@ -7,20 +7,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 import pg from "pg";
 import dotenv from 'dotenv';
+dotenv.config();
+const { Pool } = pg;
 
-const db = new pg.Client({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-  ssl: {
-    rejectUnauthorized: false, // This will allow self-signed certificates
-  },
-});
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+})
 
 
-db.connect((err) => {
+pool.connect((err) => {
   if (err) {
     console.error("Connection error:", err.stack);
   } else {
@@ -37,7 +32,7 @@ let items = [
 app.get("/", async(req, res) => { 
   var re = [];
   try{
-    const result = await db.query("SELECT * FROM items");
+    const result = await pool.query("SELECT * FROM items");
     const items = result.rows;
 
     res.render("index.ejs", {
@@ -54,7 +49,7 @@ app.post("/add", async (req, res) => {
   
 
   try {
-    await db.query('INSERT INTO items (title) VALUES($1)', [item]);
+    await pool.query('INSERT INTO items (title) VALUES($1)', [item]);
     res.redirect("/");
   } catch (err) {
     console.error(err);
@@ -66,7 +61,7 @@ app.post("/add", async (req, res) => {
 
 app.post("/edit", async(req,res)=>{
     try{
-      await db.query("UPDATE items SET title = $1 where id = $2",[req.body.updatedItemTitle,parseInt(req.body.updatedItemId,10)])
+      await pool.query("UPDATE items SET title = $1 where id = $2",[req.body.updatedItemTitle,parseInt(req.body.updatedItemId,10)])
       res.redirect("/")
     }catch(err){
       console.error(err);
@@ -75,7 +70,7 @@ app.post("/edit", async(req,res)=>{
 
 app.post("/delete",async(req, res) => {
     try{
-      await db.query("DELETE FROM items WHERE id = $1",[parseInt(req.body.deleteItemId,10)])
+      await pool.query("DELETE FROM items WHERE id = $1",[parseInt(req.body.deleteItemId,10)])
       res.redirect('/')
     }catch(err){
       console.log(err);
