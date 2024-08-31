@@ -2,7 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import fs from 'fs';
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 import pg from "pg";
